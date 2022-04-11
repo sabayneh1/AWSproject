@@ -1,0 +1,346 @@
+<html>
+    <script src="js/jquery-1.11.0.min.js" type="text/javascript"></script>
+    <script src="https://sdk.amazonaws.com/js/aws-sdk-2.7.16.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.5.0/Chart.min.js"></script>
+    <script src="https://rawgit.com/aws/amazon-cognito-identity-js/master/dist/aws-cognito-sdk.min.js"></script> 
+    <script src="https://rawgit.com/aws/amazon-cognito-identity-js/master/dist/amazon-cognito-identity.min.js"></script>
+
+    <script>
+
+    var idToken = null;
+
+    function checkLogin() {
+        var url_string = window.location.href;
+        var url = new URL(url_string);
+        idToken = url.searchParams.get("id_token");
+        if (idToken != null) {
+            document.getElementById("welcomeMsg").innerHTML = "signed in";
+            auth();
+        }
+    }
+
+    function auth() {
+        AWS.config.update({
+        region: "ca-central-1",
+    
+
+        });
+
+        AWS.config.credentials = new AWS.CognitoIdentityCredentials({
+                IdentityPoolId : 'ca-central-1:65f6d62e-43cf-4c2d-8353-f0c432171e22',
+                Logins : {
+                "cognito-idp.ca-central-1.amazonaws.com/ca-central-1_wydEcuPsA": idToken
+                },
+                
+            });
+                    
+    }    
+
+    function signInButton() {
+    
+    var authenticationData = {
+           Username : document.getElementById("sam").value,
+           Password : document.getElementById("123Sam$$").value,
+       };
+    
+       var authenticationDetails = new AmazonCognitoIdentity.AuthenticationDetails(authenticationData);
+       
+    var poolData = {
+           UserPoolId : "(ca-central-1_wydEcuPsA)", 
+           ClientId : "(7v7g4aiigjca7nolnb7lthtert)", 
+       };
+    
+       var userPool = new AmazonCognitoIdentity.CognitoUserPool(poolData);
+    
+       var userData = {
+           Username : document.getElementById("inputUsername").value,
+           Pool : userPool,
+       };
+    
+       var cognitoUser = new AmazonCognitoIdentity.CognitoUser(userData);
+       
+    cognitoUser.authenticateUser(authenticationDetails, {
+           onSuccess: function (result) {
+               console.log(JSON.stringify(result));
+      // var accessToken = result.getAccessToken().getJwtToken();
+      // console.log(accessToken); 
+           },
+   
+           onFailure: function(err) {
+               alert(err.message || JSON.stringify(err));
+           },
+       });
+   }
+
+
+
+
+        let awsConfig = {
+        "region": "ca-central-1",
+        "endpoint": "dynamodb.ca-central-1.amazonaws.com ",
+        "accessKeyId": "AKIATTNQMHUBQRRVI5SM", "secretAccessKey": "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"
+    };
+    AWS.config.update(awsConfig);
+    let sec  =[];
+    let tempd;
+
+   let dc = new AWS.DynamoDB.DocumentClient();
+    let collector  = function () {
+        var params = {
+            TableName: "node",
+        };
+        dc.scan(params, sc)
+
+        function sc(err, data) {
+            if (err) {
+                console.log("users::collector ::error - " + JSON.stringify(err, null, 2));
+            }
+            else {
+                console.log(data)
+                chartget(data)
+                let dataHtml = '';
+                                            const tb = document.getElementById('inventory');
+                                            data.Items.forEach(function (Item) {
+                                                            dataHtml += `<tr><td>${Item.Country}</td><td>${Item.Item}</td><td>${Item.count}</td></tr>`;
+                                                        });
+                                                        //console.log(dataHtml)
+                                                        tb.innerHTML = dataHtml;
+                selectCountry (data)
+                let selecteoption = document.getElementById("selectCountry ")
+                        selecteoption.addEventListener('change',function(){
+                                
+                                flag = "true";
+                                Userselect = this.value;
+                                console.log(flag)
+                                console.log(Userselect)
+                                var selectioncheck  = Userselect.localeCompare("All")
+                                var outcome = flag.localeCompare("true")
+                                //IF the user has choose a Country from the picklist then reload the table data
+                                    if(outcome == 0){
+                                        if(selectioncheck  == 0){
+                                            chartget(data)
+                                            let dataHtml = '';
+                                            const tb = document.getElementById('inventory');
+                                            data.Items.forEach(function (Item) {
+                                                            dataHtml += `<tr><td>${Item.Country}</td><td>${Item.Item}</td><td>${Item.count}</td></tr>`;
+                                                        });
+                                                        //console.log(dataHtml)
+                                                        tb.innerHTML = dataHtml;
+                                        }
+                                        else{
+                                        console.log("Entered the loop")
+                                        flag = "false"
+                                        var params = {
+                                            TableName: "node",
+                                            FilterExpression: 'Country = :Country',
+                                            ExpressionAttributeValues: {
+                                                ':Country': Userselect
+                                            }
+                                        };
+                                        dc.scan(params, sc)
+                                        function sc(err, awsnewdata) {
+                                            if (err) {
+                                                console.log("users::collector ::error - " + JSON.stringify(err, null, 2));
+                                            }
+                                            else {
+                                                //load the table with filtered data
+                                                console.log(awsnewdata)
+                                                chartget(awsnewdata)
+                                                let dataHtml = '';
+                                                const tb = document.getElementById('inventory');
+                                                awsnewdata.Items.forEach(function (Item) {
+                                                                dataHtml += `<tr><td>${Item.Country}</td><td>${Item.Item}</td><td>${Item.count}</td></tr>`;
+                                                            });
+                                                            //console.log(dataHtml)
+                                                            tb.innerHTML = dataHtml;
+                                            }
+                                    }
+
+                                        }
+                                }
+                    });
+
+            }
+        }
+    }
+    window.onload = function(){
+        collector ()
+    }
+
+    function chartget(chartdata){
+
+        var xValues = [];
+        var yValues = [];
+        var barColors = [];
+        var arraydata = [];
+
+        chartdata.Items.forEach(function (Item) {
+            const randomColor = Math.floor(Math.random()*16777215).toString(16);
+            let tcount = Item.count
+            tcount = tcount.toString().replace(/(?:\\[rn]|[\r\n]+)+/g, "")
+            arraydata.push([Item.Country+" - "+Item.Item,parseInt(tcount),"#"+randomColor])
+            });
+            for(var j=0;j<arraydata.length;j++){
+                    xValues.push(arraydata[j][0])
+                    console.log(arraydata[j][0])
+                    yValues.push(arraydata[j][1])
+                    console.log(arraydata[j][1])
+                    barColors.push(arraydata[j][2])
+                    console.log(arraydata[j][2])
+            }
+            // xValues = [...new Set(xValues)]
+            console.log(xValues)
+            // console.log(yValues)
+            // console.log(barColors)
+            chartt(xValues,yValues,barColors)
+}
+
+function selectCountry (data){
+
+        let selectoptions = document.getElementById('selectCountry ');
+        data.Items.forEach(function (Item) {
+            sec .push(Item.Country)
+                    });
+
+        sec  = [...new Set(sec )]
+        console.log(sec )
+
+        for(var i=0;i<sec .length;i++){
+
+            let option = document.createElement("OPTION");
+            let value = document.createTextNode(sec [i])
+            option.append(value);
+            option.setAttribute("value",sec [i]);
+            selectoptions.insertBefore(option,selectoptions.lastChild);
+        }
+        let alloption = document.createElement("OPTION");
+        alloption.append('All')
+        selectoptions.insertBefore(alloption,selectoptions.lastChild);
+        }
+
+
+
+
+
+    function chartt(xValues,yValues,barColors){
+            new Chart("myChart", {
+            type: "horizontalBar",
+            data: {
+            labels: xValues,
+            datasets: [{
+                backgroundColor: barColors,
+                data: yValues
+            }]
+            },
+            options: {
+                legend: {display: false},
+                title: {
+                display: true,
+                text: "Item Count per Country"
+                },
+                scales: {
+                xAxes: [{ticks: {min: 1, max:60}}]
+                }
+            }
+            });
+        }
+
+
+      
+
+
+
+
+
+    </script>
+    </Head>
+        
+
+        <style>
+        table, td, th {
+          border: 1px solid black;
+          
+        }
+        
+        table {
+          border-collapse: collapse;
+          width: 50%;
+          text-align: center;
+          margin-left: center; 
+          margin-right: center;
+        }
+        
+        td {
+          height: 60px;
+          vertical-align: bottom;
+         
+        }
+        table.center {
+            margin-left: center; 
+            margin-right: center;
+        }
+        </style> 
+        
+
+
+        
+        <div style="text-align: center;">
+        <div class="jumbotron">
+        <div class="container">
+        <div style="text-align: center;"></div>
+        <h1 style="background-color:DodgerBlue;">Welcome to group 4 store</h1>
+        <h2 style="background-color:DodgerBlue;">Inventory Dashboard</h2>
+        <br>
+        
+    </div>
+</div>
+    
+    
+    </head>
+    
+    <body>
+
+        
+          
+
+        
+        <body bgcolor=”#00FF00"></body>
+
+        <onload="checkLogin()">
+    
+        
+       
+        <a href="https://group4-as-1.auth.ca-central-1.amazoncognito.com/login?client_id=7v7g4aiigjca7nolnb7lthtert&response_type=token&scope=aws.cognito.signin.user.admin+email+openid+phone&redirect_uri=https://group4as1.tk">login</a>  
+
+        <div id="body">
+            <span> PRESS THE ARROW BOUTTON BELOW TO VIEW INVENTORY BY Country</span>
+            <span>   </span>
+            <span></span>
+            <span></span>
+        </div>
+
+        <select id="selectCountry " name="selectcountry" class="custom-select">
+            <option value = ""></option>
+        </select>
+
+        <table class="content-table" id="content-table" >
+            <thead>
+                <tr>
+                <th>Store</th>
+                <th>Item</th>
+                <th>Count</th>
+                </tr>
+            </thead>
+        <tbody id = "inventory"></tbody>
+        </table>
+
+        <div id="barchart_values" class= "barchart_values" style="width: 850px; height: 550px;">
+            <canvas  id="myChart" style="width:100%;max-width:900px;height:70%;position:absolute; top: 185; right: 50;background-color: white"></canvas>
+        </div>
+
+        
+            
+        
+
+    </body>
+</html>
