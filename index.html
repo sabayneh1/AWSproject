@@ -27,9 +27,9 @@
         });
 
         AWS.config.credentials = new AWS.CognitoIdentityCredentials({
-                IdentityPoolId : 'ca-central-1:65f6d62e-43cf-4c2d-8353-f0c432171e22',
+                IdentityPoolId : 'put your own IdentityPooolID',
                 Logins : {
-                "cognito-idp.ca-central-1.amazonaws.com/ca-central-1_wydEcuPsA": idToken
+                "Put your own cognito token": idToken
                 },
                 
             });
@@ -37,17 +37,17 @@
     }    
 
     function signInButton() {
-    
+    ### i don't recomand using the bleow ####
     var authenticationData = {
-           Username : document.getElementById("sam").value,
-           Password : document.getElementById("123Sam$$").value,
+           Username : document.getElementById("username").value,
+           Password : document.getElementById("passowrd").value,
        };
     
        var authenticationDetails = new AmazonCognitoIdentity.AuthenticationDetails(authenticationData);
        
     var poolData = {
-           UserPoolId : "(ca-central-1_wydEcuPsA)", 
-           ClientId : "(7v7g4aiigjca7nolnb7lthtert)", 
+           UserPoolId : "(use your own user poolID)", 
+           ClientId : "(You use your own client id )", 
        };
     
        var userPool = new AmazonCognitoIdentity.CognitoUserPool(poolData);
@@ -78,7 +78,9 @@
         let awsConfig = {
         "region": "ca-central-1",
         "endpoint": "dynamodb.ca-central-1.amazonaws.com ",
-        "accessKeyId": "AKIATTNQMHUBQRRVI5SM", "secretAccessKey": "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"
+            
+         ##### I don't recomand using the below##### 
+        "accessKeyId": "I am role access key id", "secretAccessKey": "I am role secretAcesskey"
     };
     AWS.config.update(awsConfig);
     let sec  =[];
